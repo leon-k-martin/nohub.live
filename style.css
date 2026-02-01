@@ -645,6 +645,22 @@ h2::after {
     color: var(--yellow);
 }
 
+.dates-footer {
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+.dates-footer a {
+    color: var(--blue);
+    text-decoration: none;
+    border-bottom: 2px dashed var(--red);
+}
+
+.dates-footer a:hover {
+    background: var(--red);
+    color: var(--yellow);
+}
+
 /* ===== GALLERY SECTION ===== */
 .photo-collage {
     display: flex;

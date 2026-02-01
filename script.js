@@ -307,6 +307,67 @@ async function discoverDates() {
             const data = await response.json();
             if (Array.isArray(data)) {
                 files = data;
+            } else if (Array.isArray(data.dates)) {
+                files = data.dates;
+            }
+        }
+    } catch {
+        // Manifest missing or invalid
+    }
+
+    if (!files.length) return;
+
+    const entries = [];
+
+    for (const file of files) {
+        const path = file.startsWith('dates/') ? file : `dates/${file}`;
+        try {
+            const response = await fetch(path, { cache: 'no-store' });
+            if (!response.ok) continue;
+            const data = await response.json();
+            entries.push(data);
+        } catch {
+            // Skip invalid entry
+        }
+    }
+
+    if (!entries.length) return;
+
+    entries.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    list.innerHTML = '';
+
+    entries.forEach((entry) => {
+        const item = document.createElement('li');
+        const date = entry.date || 'TBA';
+        const city = entry.city || entry.location || '';
+        const venue = entry.venue || '';
+        const note = entry.note || '';
+
+        const parts = [date, city, venue].filter(Boolean).join(' — ');
+        if (entry.link) {
+            item.innerHTML = `<a href="${entry.link}" target="_blank" rel="noopener">${parts}</a>${note ? ` — ${note}` : ''}`;
+        } else {
+            item.textContent = `${parts}${note ? ` — ${note}` : ''}`;
+        }
+
+        list.appendChild(item);
+    });
+}
+
+// ===== DATES HANDLING =====
+async function discoverDates() {
+    const list = document.getElementById('dates-list');
+    if (!list) return;
+
+    const manifestPath = 'dates/manifest.json';
+    let files = [];
+
+    try {
+        const response = await fetch(manifestPath, { cache: 'no-store' });
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                files = data;
             } else if (Array.isArray(data.files)) {
                 files = data.files;
             }
@@ -457,6 +518,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Discover and display videos
     await discoverVideos();
+
+    // Discover and display dates
+    await discoverDates();
 
     // Discover and display dates
     await discoverDates();
