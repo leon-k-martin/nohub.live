@@ -1,3 +1,45 @@
+// ===== INFO SECTION (MARKDOWN) =====
+async function loadInfo() {
+    const container = document.getElementById('info-content');
+    if (!container) return;
+
+    try {
+        const response = await fetch('content/info.md');
+        if (!response.ok) throw new Error('Failed to load info.md');
+        
+        const markdown = await response.text();
+        
+        // Simple markdown to HTML conversion
+        const html = markdown
+            // Remove h1 title (we have it in HTML already)
+            .replace(/^#\s+.*\n+/m, '')
+            // Split by horizontal rule into sections (EN / DE)
+            .split(/\n---\n/)
+            .map((section, index) => {
+                const processed = section
+                    .trim()
+                    // Bold text
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    // Italic text
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    // Line breaks to paragraphs
+                    .split(/\n\n+/)
+                    .filter(p => p.trim())
+                    .map(p => `<p>${p.replace(/\n/g, ' ')}</p>`)
+                    .join('');
+                
+                const className = index === 0 ? 'info-text' : 'info-text-de';
+                return `<div class="${className}">${processed}</div>`;
+            })
+            .join('');
+        
+        container.innerHTML = html;
+    } catch (err) {
+        console.error('Error loading info:', err);
+        container.innerHTML = '<p>Failed to load info content.</p>';
+    }
+}
+
 // ===== DYNAMIC HEADER SPACING =====
 function updateHeaderSpacing() {
     const header = document.getElementById('main-header');
@@ -442,6 +484,9 @@ function setupKeyboard() {
 document.addEventListener('DOMContentLoaded', async () => {
     // Update header spacing
     updateHeaderSpacing();
+
+    // Load info content from markdown
+    await loadInfo();
 
     // Setup synth keyboard
     setupKeyboard();
