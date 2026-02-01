@@ -328,6 +328,36 @@ h2::after {
     width: 100%;
 }
 
+.play-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: hint-bounce 1.5s ease-in-out infinite;
+    color: var(--blue);
+    opacity: 0.8;
+}
+
+.hint-arrow {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.hint-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: lowercase;
+    letter-spacing: 2px;
+    transform: rotate(-3deg);
+    border: 2px dashed var(--red);
+    padding: 5px 15px;
+    margin-top: 5px;
+}
+
+@keyframes hint-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
 #synth-output img {
     max-width: 75%;
     max-height: 90%;
