@@ -209,7 +209,7 @@ h2::after {
     gap: 0;
     transform: rotate(-5deg) scale(1.3);
     transform-origin: center center;
-    cursor: url('static/img/mallet-cursor.png') 8 8, pointer;
+    cursor: url('static/img/mallet-cursor-large.png') 8 8, pointer;
     flex-shrink: 0;
 }
 
@@ -246,7 +246,7 @@ h2::after {
     border: none;
     border-radius: 5px;
     width: 26px;
-    cursor: url('static/img/mallet-cursor.png') 8 8, pointer;
+    cursor: url('static/img/mallet-cursor-large.png') 8 8, pointer;
     display: flex;
     align-items: center;
     justify-content: center;
