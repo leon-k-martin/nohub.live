@@ -20,7 +20,7 @@ const AudioEngine = {
     // Initialize everything - call on first user interaction
     init() {
         if (this.initPromise) return this.initPromise;
-        
+
         this.initPromise = (async () => {
             try {
                 // Create audio context
@@ -29,9 +29,9 @@ const AudioEngine = {
                     console.error('Web Audio API not supported');
                     return false;
                 }
-                
+
                 this.context = new AudioContextClass();
-                
+
                 // Resume if suspended (required on iOS/Safari)
                 if (this.context.state === 'suspended') {
                     await this.context.resume();
@@ -40,10 +40,10 @@ const AudioEngine = {
                 // Fetch and decode audio
                 const response = await fetch('static/audio/pads/Pad_02.mp3');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
+
                 const arrayBuffer = await response.arrayBuffer();
                 this.buffer = await this.context.decodeAudioData(arrayBuffer);
-                
+
                 this.isReady = true;
                 console.log('🎵 Audio ready!');
                 return true;
@@ -53,7 +53,7 @@ const AudioEngine = {
                 return false;
             }
         })();
-        
+
         return this.initPromise;
     },
 
