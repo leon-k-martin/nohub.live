@@ -1,9 +1,16 @@
-// ===== AUDIO ENGINE (INSTANT PLAYBACK) =====
+// ===== DYNAMIC HEADER SPACING =====
+function updateHeaderSpacing() {
+    const header = document.getElementById('main-header');
+    if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    }
+}
+
+// ===== AUDIO ENGINE (HOWLER.JS) =====
 const AudioEngine = {
-    context: null,
-    buffer: null,
+    sounds: {},
     isReady: false,
-    initPromise: null,
 
     // Semitone ratios for pitch shifting (C major scale)
     noteRatios: {
@@ -17,79 +24,46 @@ const AudioEngine = {
         'C2': 2.0
     },
 
-    // Initialize everything - call on first user interaction
+    // Initialize - preload the sound
     init() {
-        if (this.initPromise) return this.initPromise;
+        if (this.isReady) return Promise.resolve(true);
 
-        this.initPromise = (async () => {
-            try {
-                // Create audio context
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContextClass) {
-                    console.error('Web Audio API not supported');
-                    return false;
+        return new Promise((resolve) => {
+            // Create a Howl instance for each note with different rates
+            const baseSound = new Howl({
+                src: ['static/audio/pads/Pad_02.mp3', 'static/audio/pads/Pad_02.wav'],
+                preload: true,
+                volume: 0.6,
+                onload: () => {
+                    this.isReady = true;
+                    console.log('🎵 Howler audio ready!');
+                    resolve(true);
+                },
+                onloaderror: (id, err) => {
+                    console.error('Howler load error:', err);
+                    resolve(false);
                 }
-
-                this.context = new AudioContextClass();
-
-                // Resume if suspended (required on iOS/Safari)
-                if (this.context.state === 'suspended') {
-                    await this.context.resume();
-                }
-
-                // Fetch and decode audio
-                const response = await fetch('static/audio/pads/Pad_02.mp3');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const arrayBuffer = await response.arrayBuffer();
-                this.buffer = await this.context.decodeAudioData(arrayBuffer);
-
-                this.isReady = true;
-                console.log('🎵 Audio ready!');
-                return true;
-            } catch (err) {
-                console.error('Audio init failed:', err);
-                this.initPromise = null; // Allow retry
-                return false;
-            }
-        })();
-
-        return this.initPromise;
+            });
+            this.baseSound = baseSound;
+        });
     },
 
-    // Play note - SYNCHRONOUS when ready (no async overhead)
+    // Play note - uses Howler's robust playback
     play(note) {
-        if (!this.isReady || !this.buffer || !this.context) {
-            // Not ready yet - initialize and play after
-            this.init().then(() => this.play(note));
+        if (!this.isReady || !this.baseSound) {
+            // Not ready yet - initialize first
+            this.init().then(() => {
+                if (this.isReady) this.play(note);
+            });
             return;
         }
 
-        // Resume context if it got suspended (e.g., tab backgrounded)
-        if (this.context.state === 'suspended') {
-            this.context.resume();
-        }
+        const rate = this.noteRatios[note] || 1.0;
+        const id = this.baseSound.play();
+        this.baseSound.rate(rate, id);
 
-        try {
-            const source = this.context.createBufferSource();
-            const gain = this.context.createGain();
-
-            source.buffer = this.buffer;
-            source.playbackRate.value = this.noteRatios[note] || 1.0;
-
-            source.connect(gain);
-            gain.connect(this.context.destination);
-
-            // Envelope for smooth attack/release
-            const now = this.context.currentTime;
-            gain.gain.setValueAtTime(0.6, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-            source.start(0);
-            source.stop(now + 0.9);
-        } catch (err) {
-            console.error('Playback error:', err);
-        }
+        // Fade out for smooth release
+        this.baseSound.fade(0.6, 0, 800, id);
     }
 };
 
@@ -445,6 +419,9 @@ function setupKeyboard() {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async () => {
+    // Update header spacing
+    updateHeaderSpacing();
+
     // Setup synth keyboard
     setupKeyboard();
 
@@ -470,3 +447,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('touchstart', initAudio, { once: false });
     document.addEventListener('keydown', initAudio, { once: false });
 });
+
+// Update header spacing on window resize
+window.addEventListener('resize', updateHeaderSpacing);

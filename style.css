@@ -54,24 +54,15 @@ body {
 }
 
 .header-stripe {
-    height: 6px;
-    background: repeating-linear-gradient(
-        90deg,
-        var(--red) 0px,
-        var(--red) 15px,
-        transparent 15px,
-        transparent 30px
-    );
+    height: 12px;
+    background-image: url("static/img/pill-spaced.png");
+    background-repeat: repeat-x;
+    background-position: center;
+    background-size: auto 10px;
 }
 
 .header-stripe.bottom {
-    background: repeating-linear-gradient(
-        90deg,
-        var(--blue) 0px,
-        var(--blue) 15px,
-        transparent 15px,
-        transparent 30px
-    );
+    background-image: url("static/img/pill-blue-spaced-2.png");
 }
 
 .header-nav {
@@ -167,7 +158,7 @@ h2::after {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    padding: 1vh 10px 2vh 10px;
+    padding: 4vh 10px 2vh 10px;
 }
 
 .hero-content {
@@ -366,9 +357,6 @@ h2::after {
     transform: rotate(var(--rotation, 2deg));
     transition: transform 0.3s ease;
 }
-    transform: rotate(var(--rotation, 2deg));
-    transition: transform 0.3s ease;
-}
 
 /* ===== LISTEN SECTION ===== */
 #listen {
@@ -393,9 +381,9 @@ h2::after {
 .archive-section summary {
     cursor: pointer;
     font-size: 1.2rem;
-    padding: 15px 20px;
+    padding: 8px 0;
     background: transparent;
-    border: 3px dashed var(--red);
+    border: none;
     list-style: none;
     transition: all 0.2s ease;
     color: var(--blue);
@@ -407,8 +395,8 @@ h2::after {
 }
 
 .archive-section summary:hover {
-    background: rgba(193, 58, 58, 0.1);
-    transform: translateX(5px);
+    transform: translateX(3px);
+    color: var(--red);
 }
 
 .archive-section[open] summary {
@@ -416,15 +404,14 @@ h2::after {
 }
 
 .archive-content {
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.3);
-    border: 3px dashed var(--red);
-    border-top: none;
+    padding: 8px 0 0 0;
+    background: transparent;
+    border: none;
 }
 
 .archive-content h4 {
     color: var(--red);
-    margin: 15px 0 10px;
+    margin: 12px 0 6px;
     font-size: 1rem;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -436,13 +423,13 @@ h2::after {
 
 .archive-content ul {
     list-style: none;
-    padding-left: 10px;
+    padding-left: 0;
 }
 
 .archive-content li {
     margin: 8px 0;
     position: relative;
-    padding-left: 20px;
+    padding-left: 16px;
 }
 
 .archive-content li::before {
@@ -466,9 +453,9 @@ h2::after {
 
 /* ===== WATCH SECTION ===== */
 #watch {
-    height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
-    overflow-y: auto;
+    height: auto;
+    max-height: none;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -731,13 +718,14 @@ h2::after {
     color: var(--yellow);
     background-image: url("static/img/texture_blue.png");
     background-repeat: repeat;
-    border: 4px dashed var(--red);
+    /* border: 4px dashed var(--red); */
     cursor: pointer;
     transition: all 0.2s ease;
     transform: rotate(-1deg);
     text-transform: uppercase;
     letter-spacing: 1px;
     box-shadow: 3px 3px 0 var(--red);
+    border-radius: 4px;
 }
 
 .btn:hover {
@@ -750,7 +738,7 @@ h2::after {
 
 .btn-primary {
     background-image: url("static/img/texture_red.png");
-    border: 4px dashed var(--blue);
+    /* border: 4px dashed var(--blue); */
     color: var(--yellow);
     box-shadow: 3px 3px 0 var(--blue);
 }
@@ -797,10 +785,6 @@ footer p {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-    body {
-        padding-top: 60px;
-    }
-
     .header-nav {
         padding: 6px 15px;
     }
@@ -848,10 +832,6 @@ footer p {
 }
 
 @media (max-width: 480px) {
-    body {
-        padding-top: 55px;
-    }
-
     .header-nav {
         padding: 5px 10px;
         flex-wrap: wrap;
