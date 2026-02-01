@@ -1,14 +1,15 @@
 // ===== INFO SECTION (MARKDOWN) =====
 async function loadInfo() {
     const container = document.getElementById('info-content');
+    const toggle = document.getElementById('lang-toggle');
     if (!container) return;
 
     try {
         const response = await fetch('content/info.md');
         if (!response.ok) throw new Error('Failed to load info.md');
-        
+
         const markdown = await response.text();
-        
+
         // Simple markdown to HTML conversion
         const html = markdown
             // Remove h1 title (we have it in HTML already)
@@ -27,13 +28,21 @@ async function loadInfo() {
                     .filter(p => p.trim())
                     .map(p => `<p>${p.replace(/\n/g, ' ')}</p>`)
                     .join('');
-                
+
                 const className = index === 0 ? 'info-text' : 'info-text-de';
                 return `<div class="${className}">${processed}</div>`;
             })
             .join('');
-        
+
         container.innerHTML = html;
+
+        // Setup language toggle
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                const showingDe = container.classList.toggle('show-de');
+                toggle.textContent = showingDe ? 'en' : 'de';
+            });
+        }
     } catch (err) {
         console.error('Error loading info:', err);
         container.innerHTML = '<p>Failed to load info content.</p>';
