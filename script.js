@@ -1,9 +1,9 @@
-// ===== AUDIO ENGINE (LOW LATENCY) =====
+// ===== AUDIO ENGINE (INSTANT PLAYBACK) =====
 const AudioEngine = {
     context: null,
     buffer: null,
-    rawAudioData: null,
-    loadPromise: null,
+    isReady: false,
+    initPromise: null,
 
     // Semitone ratios for pitch shifting (C major scale)
     noteRatios: {
@@ -17,78 +17,57 @@ const AudioEngine = {
         'C2': 2.0
     },
 
-    // Preload audio data immediately (doesn't need user interaction)
-    preloadAudioData() {
-        if (this.loadPromise) return this.loadPromise;
-
-        this.loadPromise = fetch('static/audio/pads/Pad_02.mp3')
-            .then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.arrayBuffer();
-            })
-            .then(data => {
-                this.rawAudioData = data;
-                console.log('🎵 Audio data preloaded:', data.byteLength, 'bytes');
-                return data;
-            })
-            .catch(err => {
-                console.error('Failed to preload audio:', err);
-                this.loadPromise = null;
-                return null;
-            });
-
-        return this.loadPromise;
-    },
-
-    // Create context and decode buffer (needs user interaction)
-    async ensureReady() {
-        // Create context if needed
-        if (!this.context) {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextClass) {
-                console.error('Web Audio API not supported');
-                return false;
-            }
-            this.context = new AudioContextClass();
-        }
-
-        // Resume if suspended
-        if (this.context.state === 'suspended') {
-            await this.context.resume();
-        }
-
-        // Decode buffer if needed
-        if (!this.buffer) {
-            // Wait for preload if not done
-            await this.preloadAudioData();
-
-            if (!this.rawAudioData) {
-                console.error('No audio data available');
-                return false;
-            }
-
+    // Initialize everything - call on first user interaction
+    init() {
+        if (this.initPromise) return this.initPromise;
+        
+        this.initPromise = (async () => {
             try {
-                // Must clone because decodeAudioData detaches the buffer
-                const dataClone = this.rawAudioData.slice(0);
-                this.buffer = await this.context.decodeAudioData(dataClone);
-                console.log('🎵 Audio decoded and ready');
+                // Create audio context
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) {
+                    console.error('Web Audio API not supported');
+                    return false;
+                }
+                
+                this.context = new AudioContextClass();
+                
+                // Resume if suspended (required on iOS/Safari)
+                if (this.context.state === 'suspended') {
+                    await this.context.resume();
+                }
+
+                // Fetch and decode audio
+                const response = await fetch('static/audio/pads/Pad_02.mp3');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const arrayBuffer = await response.arrayBuffer();
+                this.buffer = await this.context.decodeAudioData(arrayBuffer);
+                
+                this.isReady = true;
+                console.log('🎵 Audio ready!');
+                return true;
             } catch (err) {
-                console.error('Failed to decode audio:', err);
+                console.error('Audio init failed:', err);
+                this.initPromise = null; // Allow retry
                 return false;
             }
-        }
-
-        return true;
+        })();
+        
+        return this.initPromise;
     },
 
-    // Play a note - fast path when already initialized
-    async play(note) {
-        const ready = await this.ensureReady();
-        if (!ready || !this.buffer || !this.context) return;
+    // Play note - SYNCHRONOUS when ready (no async overhead)
+    play(note) {
+        if (!this.isReady || !this.buffer || !this.context) {
+            // Not ready yet - initialize and play after
+            this.init().then(() => this.play(note));
+            return;
+        }
 
-        // Resume if needed
+        // Resume context if it got suspended (e.g., tab backgrounded)
         if (this.context.state === 'suspended') {
-            await this.context.resume();
+            this.context.resume();
         }
 
         try {
@@ -101,26 +80,22 @@ const AudioEngine = {
             source.connect(gain);
             gain.connect(this.context.destination);
 
-            // Envelope
+            // Envelope for smooth attack/release
             const now = this.context.currentTime;
             gain.gain.setValueAtTime(0.6, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
 
-            source.start(now);
+            source.start(0);
             source.stop(now + 0.9);
-
         } catch (err) {
             console.error('Playback error:', err);
         }
     }
 };
 
-// Preload audio data immediately on script load
-AudioEngine.preloadAudioData();
-
-// Simple wrapper function for backwards compatibility
-async function playNote(note) {
-    await AudioEngine.play(note);
+// Play note and show photo - SYNCHRONOUS (no async/await)
+function playNote(note) {
+    AudioEngine.play(note);
     showRandomPhoto();
 }
 
@@ -292,21 +267,19 @@ function setupKeyboard() {
     bars.forEach(bar => {
         const note = bar.dataset.note;
 
-        // Click
-        bar.addEventListener('click', async () => {
-            await playNote(note);
-
-            // Visual feedback
+        // Click - SYNCHRONOUS (no async)
+        bar.addEventListener('click', () => {
+            playNote(note);
             bar.classList.add('pressed');
             setTimeout(() => bar.classList.remove('pressed'), 150);
         });
 
-        // Touch
-        bar.addEventListener('touchstart', async (e) => {
+        // Touch - SYNCHRONOUS (no async)
+        bar.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            await playNote(note);
+            playNote(note);
             bar.classList.add('pressed');
-        });
+        }, { passive: false });
 
         bar.addEventListener('touchend', () => {
             bar.classList.remove('pressed');
@@ -319,13 +292,11 @@ function setupKeyboard() {
         'g': 'G', 'h': 'A', 'j': 'B', 'k': 'C2'
     };
 
-    document.addEventListener('keydown', async (e) => {
+    document.addEventListener('keydown', (e) => {
         if (e.repeat) return;
         const note = keyMap[e.key.toLowerCase()];
         if (note) {
-            await playNote(note);
-
-            // Visual feedback
+            playNote(note);
             const barEl = document.querySelector(`[data-note="${note}"]`);
             if (barEl) {
                 barEl.classList.add('pressed');
@@ -347,15 +318,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Discover and display videos
     await discoverVideos();
 
-    // Initialize audio context on first user interaction (required by browsers)
-    // The audio DATA is already preloaded, this just creates the context
-    const initAudioOnInteraction = () => {
-        AudioEngine.ensureReady();
-        document.removeEventListener('click', initAudioOnInteraction);
-        document.removeEventListener('touchstart', initAudioOnInteraction);
-        document.removeEventListener('keydown', initAudioOnInteraction);
+    // Initialize audio on first user interaction (required by browsers)
+    // After this, all subsequent plays are instant (synchronous)
+    const initAudio = () => {
+        AudioEngine.init();
+        document.removeEventListener('click', initAudio);
+        document.removeEventListener('touchstart', initAudio);
+        document.removeEventListener('keydown', initAudio);
     };
-    document.addEventListener('click', initAudioOnInteraction);
-    document.addEventListener('touchstart', initAudioOnInteraction);
-    document.addEventListener('keydown', initAudioOnInteraction);
+    document.addEventListener('click', initAudio, { once: false });
+    document.addEventListener('touchstart', initAudio, { once: false });
+    document.addEventListener('keydown', initAudio, { once: false });
 });
