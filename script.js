@@ -7,63 +7,84 @@ function updateHeaderSpacing() {
     }
 }
 
-// ===== AUDIO ENGINE (HOWLER.JS) =====
+// ===== AUDIO ENGINE (TONE.JS) =====
 const AudioEngine = {
-    sounds: {},
+    sampler: null,
     isReady: false,
+    isStarted: false,
 
-    // Semitone ratios for pitch shifting (C major scale)
-    noteRatios: {
-        'C': 1.0,
-        'D': 1.122,
-        'E': 1.26,
-        'F': 1.335,
-        'G': 1.498,
-        'A': 1.682,
-        'B': 1.888,
-        'C2': 2.0
+    // Note frequencies for C major scale (one octave)
+    noteFrequencies: {
+        'C': 'C4',
+        'D': 'D4',
+        'E': 'E4',
+        'F': 'F4',
+        'G': 'G4',
+        'A': 'A4',
+        'B': 'B4',
+        'C2': 'C5'
     },
 
-    // Initialize - preload the sound
-    init() {
-        if (this.isReady) return Promise.resolve(true);
+    // Start Tone.js context (must be called from user gesture)
+    async start() {
+        if (this.isStarted) return true;
+        try {
+            await Tone.start();
+            this.isStarted = true;
+            console.log('🎵 Tone.js started!');
+            return true;
+        } catch (err) {
+            console.error('Tone.js start failed:', err);
+            return false;
+        }
+    },
 
-        return new Promise((resolve) => {
-            // Create a Howl instance for each note with different rates
-            const baseSound = new Howl({
-                src: ['static/audio/pads/Pad_02.mp3', 'static/audio/pads/Pad_02.wav'],
-                preload: true,
-                volume: 0.6,
+    // Initialize - load the sampler
+    async init() {
+        if (this.isReady) return true;
+
+        try {
+            // Start audio context first
+            await this.start();
+
+            // Create a sampler with the pad sound mapped to C4
+            this.sampler = new Tone.Sampler({
+                'C4': 'static/audio/pads/Pad_02.mp3'
+            }, {
+                release: 1,
                 onload: () => {
-                    this.isReady = true;
-                    console.log('🎵 Howler audio ready!');
-                    resolve(true);
-                },
-                onloaderror: (id, err) => {
-                    console.error('Howler load error:', err);
-                    resolve(false);
+                    console.log('🎵 Tone.js sampler loaded!');
                 }
-            });
-            this.baseSound = baseSound;
-        });
+            }).toDestination();
+
+            // Wait for the sampler to load
+            await Tone.loaded();
+            this.isReady = true;
+            console.log('🎵 Audio ready!');
+            return true;
+        } catch (err) {
+            console.error('Audio init failed:', err);
+            return false;
+        }
     },
 
-    // Play note - uses Howler's robust playback
+    // Play note
     play(note) {
-        if (!this.isReady || !this.baseSound) {
-            // Not ready yet - initialize first
+        // Ensure Tone is started (handles mobile unlock)
+        if (!this.isStarted) {
+            this.init().then(() => this.play(note));
+            return;
+        }
+
+        if (!this.isReady || !this.sampler) {
             this.init().then(() => {
                 if (this.isReady) this.play(note);
             });
             return;
         }
 
-        const rate = this.noteRatios[note] || 1.0;
-        const id = this.baseSound.play();
-        this.baseSound.rate(rate, id);
-
-        // Fade out for smooth release
-        this.baseSound.fade(0.6, 0, 800, id);
+        const freq = this.noteFrequencies[note] || 'C4';
+        this.sampler.triggerAttackRelease(freq, '0.8');
     }
 };
 
