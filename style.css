@@ -319,7 +319,7 @@ h2::after {
 }
 
 #synth-output {
-    margin-top: 1vh;
+    margin-top: 4vh;
     flex: 1;
     min-height: 0;
     display: flex;
