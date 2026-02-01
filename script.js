@@ -458,6 +458,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Discover and display videos
     await discoverVideos();
 
+    // Discover and display dates
+    await discoverDates();
+
     // Initialize audio on first user interaction (required by browsers)
     // After this, all subsequent plays are instant (synchronous)
     const initAudio = () => {
