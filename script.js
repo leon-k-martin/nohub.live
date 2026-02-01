@@ -338,92 +338,28 @@ async function discoverDates() {
 
     entries.forEach((entry) => {
         const item = document.createElement('li');
-        const date = entry.date || 'TBA';
-        const city = entry.city || entry.location || '';
-        const venue = entry.venue || '';
-        const note = entry.note || '';
+        const when = entry.when || entry.date || 'TBA';
+        const where = entry.where || entry.city || entry.location || '';
+        const floor = entry.floor || entry.venue || '';
+        const time = entry.time || entry.note || '';
 
-        const parts = [date, city, venue].filter(Boolean).join(' — ');
+        const parts = [
+            when ? `When: ${when}` : '',
+            where ? `Where: ${where}` : '',
+            floor ? `Floor: ${floor}` : '',
+            time ? `Time: ${time}` : ''
+        ].filter(Boolean).join(' · ');
+
         if (entry.link) {
-            item.innerHTML = `<a href="${entry.link}" target="_blank" rel="noopener">${parts}</a>${note ? ` — ${note}` : ''}`;
+            item.innerHTML = `<a href="${entry.link}" target="_blank" rel="noopener">${parts}</a>`;
         } else {
-            item.textContent = `${parts}${note ? ` — ${note}` : ''}`;
+            item.textContent = parts;
         }
 
         list.appendChild(item);
     });
 }
 
-// ===== DATES HANDLING =====
-async function discoverDates() {
-    const list = document.getElementById('dates-list');
-    if (!list) return;
-
-    const manifestPath = 'dates/manifest.json';
-    let files = [];
-
-    try {
-        const response = await fetch(manifestPath, { cache: 'no-store' });
-        if (response.ok) {
-            const data = await response.json();
-            if (Array.isArray(data)) {
-                files = data;
-            } else if (Array.isArray(data.files)) {
-                files = data.files;
-            }
-        }
-    } catch {
-        // manifest missing or invalid
-    }
-
-    const normalizePath = (p) => {
-        if (!p) return null;
-        if (p.startsWith('dates/')) return p;
-        return `dates/${p}`;
-    };
-
-    const dateFiles = files.map(normalizePath).filter(Boolean);
-    const entries = [];
-
-    for (const file of dateFiles) {
-        try {
-            const response = await fetch(file, { cache: 'no-store' });
-            if (!response.ok) continue;
-            const item = await response.json();
-            if (item && (item.date || item.title || item.location)) {
-                entries.push(item);
-            }
-        } catch {
-            // ignore bad file
-        }
-    }
-
-    list.innerHTML = '';
-
-    if (entries.length === 0) {
-        const li = document.createElement('li');
-        li.innerHTML = 'Next drop: <span>announce soon</span>';
-        list.appendChild(li);
-    } else {
-        entries.forEach((entry) => {
-            const li = document.createElement('li');
-            const date = entry.date ? `<strong>${entry.date}</strong>` : '';
-            const title = entry.title ? ` — ${entry.title}` : '';
-            const location = entry.location ? ` · ${entry.location}` : '';
-            const link = entry.link ? ` <a href="${entry.link}" target="_blank" rel="noopener">info</a>` : '';
-            li.innerHTML = `${date}${title}${location}${link}`.trim();
-            list.appendChild(li);
-        });
-    }
-
-    const telegram = document.createElement('li');
-    telegram.innerHTML = 'Follow me on telegram for more news (fuck meta!) <a href="https://t.me/nohub_music" target="_blank" rel="noopener">@nohub_music</a>';
-    list.appendChild(telegram);
-
-    const email = document.createElement('li');
-    email.innerHTML = 'Want a heads-up? <a href="mailto:nohub.live@proton.me">nohub.live@proton.me</a>';
-    list.appendChild(email);
-}
 
 function setupVideoCarousel() {
     const grid = document.getElementById('video-grid');
@@ -518,9 +454,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Discover and display videos
     await discoverVideos();
-
-    // Discover and display dates
-    await discoverDates();
 
     // Discover and display dates
     await discoverDates();

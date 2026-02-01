@@ -7,7 +7,7 @@
 
 html {
     scroll-behavior: smooth;
-    scroll-padding-top: 80px; /* Account for fixed header */
+    scroll-padding-top: 68px; /* Account for fixed header */
 }
 
 :root {
@@ -118,7 +118,7 @@ body {
 
 /* ===== SECTIONS ===== */
 section {
-    padding: 30px 20px;
+    padding: 12px 20px 24px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -599,16 +599,7 @@ h2::after {
     background: var(--red);
 }
 
-/* ===== HAPPENINGS SECTION ===== */
-.dates-board {
-    width: 100%;
-    max-width: 700px;
-    border: 3px dashed var(--red);
-    background: rgba(255, 255, 255, 0.35);
-    padding: 20px;
-    transform: rotate(-1deg);
-}
-
+/* ===== DATES SECTION ===== */
 .dates-lead {
     font-weight: bold;
     color: var(--blue);
