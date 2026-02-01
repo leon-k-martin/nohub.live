@@ -174,22 +174,53 @@ async function discoverVideos() {
     const videoGrid = document.getElementById('video-grid');
     if (!videoGrid) return;
 
-    // Try to load videos from snippets folder
+    // Try to load all videos from a manifest (generated from /static/video/snippets)
+    const manifestPath = 'static/video/snippets/manifest.json';
+    let manifestVideos = [];
+
+    try {
+        const response = await fetch(manifestPath, { cache: 'no-store' });
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                manifestVideos = data;
+            } else if (Array.isArray(data.videos)) {
+                manifestVideos = data.videos;
+            }
+        }
+    } catch {
+        // Manifest missing or invalid
+    }
+
     const knownVideos = [
         'static/video/snippets/17928417269449838.mp4',
         'static/video/snippets/17950885012914153.mp4'
     ];
 
-    const validVideos = [];
+    const normalizePath = (p) => {
+        if (!p) return null;
+        if (p.startsWith('static/')) return p;
+        return `static/video/snippets/${p}`;
+    };
 
-    for (const videoPath of knownVideos) {
-        try {
-            const response = await fetch(videoPath, { method: 'HEAD' });
-            if (response.ok) {
-                validVideos.push(videoPath);
+    const candidates = (manifestVideos.length ? manifestVideos : knownVideos)
+        .map(normalizePath)
+        .filter((p) => p && p.endsWith('.mp4'));
+
+    let validVideos = [];
+
+    if (manifestVideos.length) {
+        validVideos = candidates;
+    } else {
+        for (const videoPath of candidates) {
+            try {
+                const response = await fetch(videoPath, { method: 'HEAD' });
+                if (response.ok) {
+                    validVideos.push(videoPath);
+                }
+            } catch {
+                // Video doesn't exist
             }
-        } catch {
-            // Video doesn't exist
         }
     }
 
@@ -258,6 +289,115 @@ async function discoverVideos() {
         item.appendChild(unmuteBtn);
         videoGrid.appendChild(item);
     });
+
+    setupVideoCarousel();
+}
+
+// ===== DATES HANDLING =====
+async function discoverDates() {
+    const list = document.getElementById('dates-list');
+    if (!list) return;
+
+    const manifestPath = 'dates/manifest.json';
+    let files = [];
+
+    try {
+        const response = await fetch(manifestPath, { cache: 'no-store' });
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                files = data;
+            } else if (Array.isArray(data.files)) {
+                files = data.files;
+            }
+        }
+    } catch {
+        // manifest missing or invalid
+    }
+
+    const normalizePath = (p) => {
+        if (!p) return null;
+        if (p.startsWith('dates/')) return p;
+        return `dates/${p}`;
+    };
+
+    const dateFiles = files.map(normalizePath).filter(Boolean);
+    const entries = [];
+
+    for (const file of dateFiles) {
+        try {
+            const response = await fetch(file, { cache: 'no-store' });
+            if (!response.ok) continue;
+            const item = await response.json();
+            if (item && (item.date || item.title || item.location)) {
+                entries.push(item);
+            }
+        } catch {
+            // ignore bad file
+        }
+    }
+
+    list.innerHTML = '';
+
+    if (entries.length === 0) {
+        const li = document.createElement('li');
+        li.innerHTML = 'Next drop: <span>announce soon</span>';
+        list.appendChild(li);
+    } else {
+        entries.forEach((entry) => {
+            const li = document.createElement('li');
+            const date = entry.date ? `<strong>${entry.date}</strong>` : '';
+            const title = entry.title ? ` — ${entry.title}` : '';
+            const location = entry.location ? ` · ${entry.location}` : '';
+            const link = entry.link ? ` <a href="${entry.link}" target="_blank" rel="noopener">info</a>` : '';
+            li.innerHTML = `${date}${title}${location}${link}`.trim();
+            list.appendChild(li);
+        });
+    }
+
+    const telegram = document.createElement('li');
+    telegram.innerHTML = 'Follow me on telegram for more news (fuck meta!) <a href="https://t.me/nohub_music" target="_blank" rel="noopener">@nohub_music</a>';
+    list.appendChild(telegram);
+
+    const email = document.createElement('li');
+    email.innerHTML = 'Want a heads-up? <a href="mailto:nohub.live@proton.me">nohub.live@proton.me</a>';
+    list.appendChild(email);
+}
+
+function setupVideoCarousel() {
+    const grid = document.getElementById('video-grid');
+    const prev = document.querySelector('.carousel-arrow.prev');
+    const next = document.querySelector('.carousel-arrow.next');
+    if (!grid || !prev || !next) return;
+
+    const scrollToItem = (direction) => {
+        const items = Array.from(grid.querySelectorAll('.video-item'));
+        if (!items.length) return;
+
+        const gridRect = grid.getBoundingClientRect();
+        const center = grid.scrollLeft + gridRect.width / 2;
+
+        let currentIndex = 0;
+        let minDist = Infinity;
+
+        items.forEach((item, idx) => {
+            const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+            const dist = Math.abs(itemCenter - center);
+            if (dist < minDist) {
+                minDist = dist;
+                currentIndex = idx;
+            }
+        });
+
+        const targetIndex = Math.max(0, Math.min(items.length - 1, currentIndex + direction));
+        const target = items[targetIndex];
+        const left = target.offsetLeft - (gridRect.width - target.offsetWidth) / 2;
+
+        grid.scrollTo({ left, behavior: 'smooth' });
+    };
+
+    prev.onclick = () => scrollToItem(-1);
+    next.onclick = () => scrollToItem(1);
 }
 
 // ===== KEYBOARD SETUP =====

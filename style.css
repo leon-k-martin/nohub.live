@@ -465,13 +465,35 @@ h2::after {
 }
 
 /* ===== WATCH SECTION ===== */
+#watch {
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.video-carousel {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 .video-grid {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 24px;
     width: 100%;
-    max-width: 900px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 0;
+    flex: 1;
 }
 
 .video-item {
@@ -480,8 +502,11 @@ h2::after {
     border: 4px solid var(--blue);
     transform: rotate(var(--rotation, -1deg));
     transition: all 0.3s ease;
-    flex: 0 1 auto;
-    max-width: 100%;
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+    scroll-snap-align: center;
+    background: transparent;
 }
 
 /* Play button overlay */
@@ -511,12 +536,46 @@ h2::after {
 
 .video-item video {
     display: block;
-    max-width: 100%;
-    max-height: 400px;
     width: auto;
     height: auto;
+    max-height: 65vh;
+    max-width: 80vw;
+    object-fit: contain;
     cursor: pointer;
-    background: #000;
+    background: transparent;
+}
+
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px dashed var(--red);
+    background: var(--yellow);
+    color: var(--blue);
+    font-size: 1.6rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.carousel-arrow:hover {
+    transform: translateY(-50%) scale(1.05) rotate(-2deg);
+    background: rgba(193, 58, 58, 0.1);
+}
+
+.carousel-arrow.prev {
+    left: 6px;
+}
+
+.carousel-arrow.next {
+    right: 6px;
 }
 
 .unmute-btn {
@@ -538,6 +597,52 @@ h2::after {
     opacity: 1;
     transform: scale(1.1);
     background: var(--red);
+}
+
+/* ===== HAPPENINGS SECTION ===== */
+.dates-board {
+    width: 100%;
+    max-width: 700px;
+    border: 3px dashed var(--red);
+    background: rgba(255, 255, 255, 0.35);
+    padding: 20px;
+    transform: rotate(-1deg);
+}
+
+.dates-lead {
+    font-weight: bold;
+    color: var(--blue);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.dates-list {
+    list-style: none;
+    padding-left: 10px;
+}
+
+.dates-list li {
+    margin: 8px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.dates-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+}
+
+.dates-list a {
+    color: var(--blue);
+    text-decoration: none;
+    border-bottom: 2px solid var(--red);
+}
+
+.dates-list a:hover {
+    background: var(--red);
+    color: var(--yellow);
 }
 
 /* ===== GALLERY SECTION ===== */

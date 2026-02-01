@@ -17,6 +17,7 @@
             <ul class="nav-links">
                 <li><a href="#listen">Listen</a></li>
                 <li><a href="#watch">Watch</a></li>
+                <li><a href="#dates">Dates</a></li>
                 <li><a href="#gallery">Gallery</a></li>
                 <li><a href="#book">Book</a></li>
             </ul>
@@ -85,8 +86,12 @@
     <!-- WATCH SECTION -->
     <section id="watch">
         <h2>Watch</h2>
-        <div class="video-grid" id="video-grid">
-            <!-- Videos loaded dynamically -->
+        <div class="video-carousel">
+            <button class="carousel-arrow prev" aria-label="Previous video">&lt;</button>
+            <div class="video-grid" id="video-grid">
+                <!-- Videos loaded dynamically -->
+            </div>
+            <button class="carousel-arrow next" aria-label="Next video">&gt;</button>
         </div>
 
         <details class="archive-section">
@@ -107,6 +112,15 @@
                 </ul>
             </div>
         </details>
+    </section>
+
+    <!-- DATES SECTION -->
+    <section id="dates">
+        <h2>Dates</h2>
+        <div class="dates-board">
+            <p class="dates-lead">No fixed schedule — just spontaneous pop-ups and surprise sets.</p>
+            <ul class="dates-list" id="dates-list"></ul>
+        </div>
     </section>
 
     <!-- GALLERY SECTION -->
